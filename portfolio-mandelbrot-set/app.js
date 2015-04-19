@@ -1,5 +1,6 @@
 var MandelbrotConfig = (function () {
     function MandelbrotConfig() {
+        this.BasisScale = 2;
         this.MaxIterations = 100;
     }
     return MandelbrotConfig;
@@ -79,59 +80,53 @@ var Mandelbrot = (function (_super) {
         this.Size = new Size();
         this.Size.Height = this.Canvas.height;
         this.Size.Width = this.Canvas.width;
-        this.ImageData = this.Context.createImageData(this.Canvas.width, 1);
+        this.ImageData = this.Context.createImageData(this.Size.Width, 1);
         this.Pixels = this.ImageData.data;
     }
     Mandelbrot.prototype.draw = function () {
         var iterations = 0;
         var radius = this.Bounds.getRadius();
         radius = radius / Math.cos(4.0 / Math.PI);
-        for (var i = 0; i < this.Size.Height; ++i) {
-            for (var j = 0; j < this.Size.Width; ++j) {
-                var c = new Complex();
-                var z = new Complex(0, 0);
-                c.Real = this.Scale.Width * j + this.Bounds.Left;
-                c.Imaginary = this.Scale.Height * i + this.Bounds.Top;
-                iterations = 0;
-                while (z.abs() < radius && iterations < this.MaxIterations) {
-                    z.multiply(z);
-                    z.add(c);
-                    ++iterations;
+        var handler = function (m, i) {
+            return function () {
+                for (var j = 0; j < m.Size.Width; ++j) {
+                    var c = new Complex();
+                    var z = new Complex(0, 0);
+                    c.Real = m.Scale.Width * j + m.Bounds.Left;
+                    c.Imaginary = m.Scale.Height * i + m.Bounds.Top;
+                    iterations = 0;
+                    while (z.abs() < radius && iterations < m.MaxIterations) {
+                        z.multiply(z);
+                        z.add(c);
+                        ++iterations;
+                    }
+                    m.setPixelColor(j, m.smoothColor(iterations, z));
                 }
-                this.setPixelColor(j, this.smoothColor(iterations, z));
-            }
-            this.Context.putImageData(this.ImageData, 0, i);
+                m.Context.putImageData(m.ImageData, 0, i);
+            };
+        };
+        for (var i = 0; i < this.Size.Height; ++i) {
+            setTimeout(handler(this, i), 0);
         }
     };
-    Mandelbrot.prototype.setBounds = function (first, second, third, fourth) {
-        if (first && typeof first === "MandelbrotBounds") {
-            this.Bounds = first;
-        }
-        else if (first && typeof first === "BoundsLR" && second && typeof second === "BoundsTB") {
-            var lr = first;
-            var tb = second;
-            this.Bounds = new MandelbrotBounds();
-            this.Bounds.Bottom = tb.Bottom;
-            this.Bounds.Left = lr.Left;
-            this.Bounds.Right = lr.Right;
-            this.Bounds.Top = tb.Top;
-        }
-        else if (first && typeof first === "number" && second && typeof second === "number" && third && typeof third === "number" && fourth && typeof fourth === "number") {
-            this.Bounds = new MandelbrotBounds();
-            this.Bounds.Bottom = fourth;
-            this.Bounds.Left = first;
-            this.Bounds.Right = second;
-            this.Bounds.Top = third;
-        }
-        this.Scale.Height = (this.Bounds.Bottom - this.Bounds.Top) / this.Size.Height;
-        this.Scale.Width = (this.Bounds.Right - this.Bounds.Left) / this.Size.Width;
+    Mandelbrot.prototype.setCenter = function (x, y, zoom) {
+        this.Bounds = new MandelbrotBounds();
+        this.Scale = new Size();
+        this.Zoom = zoom;
+        this.Bounds.Bottom = y + (1 / zoom) * this.BasisScale;
+        this.Bounds.Left = x - (1 / zoom) * this.BasisScale;
+        this.Bounds.Right = x + (1 / zoom) * this.BasisScale;
+        this.Bounds.Top = y - (1 / zoom) * this.BasisScale;
+        var smaller = (this.Size.Height > this.Size.Width) ? this.Size.Width : this.Size.Height;
+        this.Scale.Height = (this.Bounds.Bottom - this.Bounds.Top) / smaller;
+        this.Scale.Width = (this.Bounds.Right - this.Bounds.Left) / smaller;
     };
     Mandelbrot.prototype.setPixelColor = function (column, color) {
         var offset = 4 * column;
         this.Pixels[offset] = ((16 * color) % 256);
-        this.Pixels[offset++] = ((16 * color) % 256);
-        this.Pixels[offset++] = ((16 * color) % 256);
-        this.Pixels[offset++] = 255;
+        this.Pixels[offset + 1] = ((16 * color) % 256);
+        this.Pixels[offset + 2] = ((16 * color) % 256);
+        this.Pixels[offset + 3] = 255;
     };
     Mandelbrot.prototype.setIterations = function (i) {
         this.MaxIterations = i;
@@ -142,11 +137,14 @@ var Mandelbrot = (function (_super) {
     return Mandelbrot;
 })(MandelbrotConfig);
 window.onload = function () {
+    var ID = document.getElementById("mandelbrot");
+    ID.setAttribute("height", "640px");
+    ID.setAttribute("width", window.outerWidth + "px");
     setTimeout(function () {
         var m = new Mandelbrot("mandelbrot");
-        m.setBounds(-2.5, 1.5, -2, 2);
-        m.setIterations(1024);
+        m.setCenter(-1.790038, 0, 85000);
+        m.setIterations(7500);
         m.draw();
-    }, 3000);
+    }, 1000);
 };
 //# sourceMappingURL=app.js.map

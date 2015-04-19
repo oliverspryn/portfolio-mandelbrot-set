@@ -13,6 +13,7 @@ class Mandelbrot extends MandelbrotConfig {
 	private Pixels: number[];
 	private Scale: Size;
 	private Size: Size;
+	private Zoom: number;
 
 	constructor(canvasID: string) {
 		super();
@@ -28,7 +29,7 @@ class Mandelbrot extends MandelbrotConfig {
 		this.Size.Height = this.Canvas.height;
 		this.Size.Width = this.Canvas.width;
 
-		this.ImageData = this.Context.createImageData(this.Canvas.width, 1);
+		this.ImageData = this.Context.createImageData(this.Size.Width, 1);
 		this.Pixels = this.ImageData.data;
 	}
 
@@ -40,71 +41,57 @@ class Mandelbrot extends MandelbrotConfig {
 		radius = radius / Math.cos(4.0 / Math.PI);
 
 	// calculate that Mandelbro, bro!
-		for(var i: number = 0; i < this.Size.Height; ++i) {
-			for(var j: number = 0; j < this.Size.Width; ++j) {
-				var c: Complex = new Complex();
-				var z: Complex = new Complex(0, 0);
-				c.Real = this.Scale.Width * j + this.Bounds.Left;
-				c.Imaginary = this.Scale.Height * i + this.Bounds.Top;
-				iterations = 0;
+		var handler = function (m: Mandelbrot, i: number) {
+			return function () {
+				for (var j: number = 0; j < m.Size.Width; ++j) {
+					var c: Complex = new Complex();
+					var z: Complex = new Complex(0, 0);
+					c.Real = m.Scale.Width * j + m.Bounds.Left;
+					c.Imaginary = m.Scale.Height * i + m.Bounds.Top;
+					iterations = 0;
 
-				while(z.abs() < radius && iterations < this.MaxIterations) {
-					z.multiply(z);
-					z.add(c);
+					while (z.abs() < radius && iterations < m.MaxIterations) {
+						z.multiply(z);
+						z.add(c);
 
-					++iterations;
+						++iterations;
+					}
+
+					m.setPixelColor(j, m.smoothColor(iterations, z));
 				}
 
-				this.setPixelColor(j, this.smoothColor(iterations, z));
-			}
+				m.Context.putImageData(m.ImageData, 0, i);
+			};
+		};
 
-			this.Context.putImageData(this.ImageData, 0, i);
+		for(var i: number = 0; i < this.Size.Height; ++i) {
+			setTimeout(handler(this, i), 0); // allows for simultaneous calculation & drawing
 		}
 	}
 
-	public setBounds(mb: MandelbrotBounds): void;
-	public setBounds(lr: BoundsLR, tb: BoundsTB): void;
-	public setBounds(left: number, right: number, top: number, bottom: number): void;
+	public setCenter(x: number, y: number, zoom: number): void {
+		this.Bounds = new MandelbrotBounds();
+		this.Scale = new Size();
+		this.Zoom = zoom;
 
-	public setBounds(first: any, second?: any, third?: number, fourth?: number): void {
-	// first overload
-		if (first && typeof first === "MandelbrotBounds") {
-			this.Bounds = first;
-	// second overload
-		} else if (first  && typeof first  === "BoundsLR" &&
-				   second && typeof second === "BoundsTB") {
-			var lr: BoundsLR   = <BoundsLR>first;
-			var tb: BoundsTB   = <BoundsTB>second;
-
-			this.Bounds        = new MandelbrotBounds();
-			this.Bounds.Bottom = tb.Bottom;
-			this.Bounds.Left   = lr.Left;
-			this.Bounds.Right  = lr.Right;
-			this.Bounds.Top    = tb.Top;
-	// third overload
-		} else if (first  && typeof first  === "number" &&
-				   second && typeof second === "number" &&
-				   third  && typeof third  === "number" &&
-				   fourth && typeof fourth === "number") {
-
-			this.Bounds        = new MandelbrotBounds();
-			this.Bounds.Bottom = fourth;
-			this.Bounds.Left   = first;
-			this.Bounds.Right  = second;
-			this.Bounds.Top    = third;
-		}
+	// bounds should be uniformly square
+		this.Bounds.Bottom = y + (1 / zoom) * this.BasisScale;
+		this.Bounds.Left = x - (1 / zoom) * this.BasisScale;
+		this.Bounds.Right = x + (1 / zoom) * this.BasisScale;
+		this.Bounds.Top = y - (1 / zoom) * this.BasisScale;
 
 	// define the scale of the canvas coordinates to the mandelbrot coordinates
-		this.Scale.Height = (this.Bounds.Bottom - this.Bounds.Top) / this.Size.Height;
-		this.Scale.Width = (this.Bounds.Right - this.Bounds.Left) / this.Size.Width;
+		var smaller: number = (this.Size.Height > this.Size.Width) ? this.Size.Width : this.Size.Height;
+		this.Scale.Height = (this.Bounds.Bottom - this.Bounds.Top) / smaller;
+		this.Scale.Width = (this.Bounds.Right - this.Bounds.Left) / smaller;
 	}
 
 	private setPixelColor(column: number, color: number) {
 		var offset = 4 * column;
-		this.Pixels[offset]   = ((16 * color) % 256);
-		this.Pixels[offset++] = ((16 * color) % 256);
-		this.Pixels[offset++] = ((16 * color) % 256);
-		this.Pixels[offset++] = 255; // alpha
+		this.Pixels[offset]     = ((16 * color) % 256);
+		this.Pixels[offset + 1] = ((16 * color) % 256);
+		this.Pixels[offset + 2] = ((16 * color) % 256);
+		this.Pixels[offset + 3] = 255; // alpha
 	}
 
 	public setIterations(i: number): void {
