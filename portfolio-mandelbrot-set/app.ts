@@ -1,6 +1,12 @@
 ﻿/// <reference path="Mandelbrot.ts" />
 /// <reference path="Types/RenderPoint.ts" />
 
+// thanks to:
+// basic tutorial: http://www.semurjengkol.com/drawing-mandelbrot-set-on-html5-graphics-canvas/
+// optimizations: https://github.com/cslarsen/mandelbrot-js
+// mathematics: https://github.com/oliver-spryn/College/tree/master/COMP%20322/Mandelbrot%20Set%20-%20Project%203
+// color smoothing: http://linas.org/art-gallery/escape/smooth.html
+
 window.onload = function() {
 // resize the canvas to the window
 	var ID: HTMLElement = document.getElementById("mandelbrot");
