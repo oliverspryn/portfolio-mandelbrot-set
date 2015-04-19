@@ -29,8 +29,8 @@
     <TypeScriptCompile Include="Types\BoundsTB.ts" />
     <TypeScriptCompile Include="Types\Complex.ts" />
     <TypeScriptCompile Include="Mandelbrot.ts" />
-    <TypeScriptCompile Include="Types\IColor.ts" />
     <TypeScriptCompile Include="Types\MandelbrotBounds.ts" />
+    <TypeScriptCompile Include="Types\RenderPoint.ts" />
     <TypeScriptCompile Include="Types\Size.ts" />
   </ItemGroup>
   <ItemGroup>

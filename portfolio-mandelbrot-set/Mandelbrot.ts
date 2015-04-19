@@ -42,7 +42,7 @@ class Mandelbrot extends MandelbrotConfig {
 
 	// calculate that Mandelbro, bro!
 		var handler = function (m: Mandelbrot, i: number) {
-			return function () {
+			return function() {
 				for (var j: number = 0; j < m.Size.Width; ++j) {
 					var c: Complex = new Complex();
 					var z: Complex = new Complex(0, 0);
@@ -74,6 +74,31 @@ class Mandelbrot extends MandelbrotConfig {
 		this.Scale = new Size();
 		this.Zoom = zoom;
 
+	// attempt to map the canvas ratio to the user-specified ratio
+		// var moveUnit: number = 0;
+		// var ratio: number = 0;
+		var smaller: number = 0;
+
+		if (this.Size.Height > this.Size.Width) {
+			// ratio = this.Size.Height / this.Size.Width;
+			// moveUnit = (y + (1 / zoom) * this.BasisScale) * ratio;
+			smaller = this.Size.Width;
+
+			// this.Bounds.Bottom = y + (1 / zoom) * this.BasisScale - moveUnit;
+			// this.Bounds.Left = x - (1 / zoom) * this.BasisScale;
+			// this.Bounds.Right = x + (1 / zoom) * this.BasisScale;
+			// this.Bounds.Top = y - (1 / zoom) * this.BasisScale - moveUnit;
+		} else {
+			// ratio = this.Size.Width / this.Size.Height;
+			// moveUnit = ((y + (1 / zoom) * this.BasisScale) * ratio) / 2;
+			smaller = this.Size.Height;
+
+			// this.Bounds.Bottom = y + (1 / zoom) * this.BasisScale;
+			// this.Bounds.Left = x - (1 / zoom) * this.BasisScale - moveUnit;
+			// this.Bounds.Right = x + (1 / zoom) * this.BasisScale - moveUnit;
+			// this.Bounds.Top = y - (1 / zoom) * this.BasisScale;
+		}
+
 	// bounds should be uniformly square
 		this.Bounds.Bottom = y + (1 / zoom) * this.BasisScale;
 		this.Bounds.Left = x - (1 / zoom) * this.BasisScale;
@@ -81,7 +106,6 @@ class Mandelbrot extends MandelbrotConfig {
 		this.Bounds.Top = y - (1 / zoom) * this.BasisScale;
 
 	// define the scale of the canvas coordinates to the mandelbrot coordinates
-		var smaller: number = (this.Size.Height > this.Size.Width) ? this.Size.Width : this.Size.Height;
 		this.Scale.Height = (this.Bounds.Bottom - this.Bounds.Top) / smaller;
 		this.Scale.Width = (this.Bounds.Right - this.Bounds.Left) / smaller;
 	}

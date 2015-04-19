@@ -113,11 +113,17 @@ var Mandelbrot = (function (_super) {
         this.Bounds = new MandelbrotBounds();
         this.Scale = new Size();
         this.Zoom = zoom;
+        var smaller = 0;
+        if (this.Size.Height > this.Size.Width) {
+            smaller = this.Size.Width;
+        }
+        else {
+            smaller = this.Size.Height;
+        }
         this.Bounds.Bottom = y + (1 / zoom) * this.BasisScale;
         this.Bounds.Left = x - (1 / zoom) * this.BasisScale;
         this.Bounds.Right = x + (1 / zoom) * this.BasisScale;
         this.Bounds.Top = y - (1 / zoom) * this.BasisScale;
-        var smaller = (this.Size.Height > this.Size.Width) ? this.Size.Width : this.Size.Height;
         this.Scale.Height = (this.Bounds.Bottom - this.Bounds.Top) / smaller;
         this.Scale.Width = (this.Bounds.Right - this.Bounds.Left) / smaller;
     };
@@ -136,14 +142,29 @@ var Mandelbrot = (function (_super) {
     };
     return Mandelbrot;
 })(MandelbrotConfig);
+var RenderPoint = (function () {
+    function RenderPoint(x, y, zoom, iterations) {
+        this.Iterations = iterations;
+        this.X = x;
+        this.Y = y;
+        this.Zoom = zoom;
+    }
+    return RenderPoint;
+})();
 window.onload = function () {
     var ID = document.getElementById("mandelbrot");
-    ID.setAttribute("height", "640px");
+    ID.setAttribute("height", "480px");
     ID.setAttribute("width", window.outerWidth + "px");
+    var pts = new Array();
+    pts.push(new RenderPoint(-1.790038, 0, 120000, 9000));
+    pts.push(new RenderPoint(-1, 0, 5, 250));
+    pts.push(new RenderPoint(-0.5623, -0.64283, 15000, 3000));
+    var i = Math.floor(Math.random() * pts.length);
+    var rand = pts[i];
     setTimeout(function () {
         var m = new Mandelbrot("mandelbrot");
-        m.setCenter(-1.790038, 0, 85000);
-        m.setIterations(7500);
+        m.setCenter(rand.X, rand.Y, rand.Zoom);
+        m.setIterations(rand.Iterations);
         m.draw();
     }, 1000);
 };
