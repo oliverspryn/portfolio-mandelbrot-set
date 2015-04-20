@@ -7,6 +7,7 @@
 
 class Mandelbrot extends MandelbrotConfig {
 	private Bounds: MandelbrotBounds;
+	private Callback:() => void;
 	private Canvas: HTMLCanvasElement;
 	private Context: CanvasRenderingContext2D;
 	private ImageData: ImageData;
@@ -23,14 +24,19 @@ class Mandelbrot extends MandelbrotConfig {
 			return;
 		}
 
+	// save canvas information
 		this.Context = this.Canvas.getContext("2d");
+		this.ImageData = this.Context.createImageData(this.Canvas.width, 1);
+		this.Pixels = this.ImageData.data;
 		this.Scale = new Size();
 		this.Size = new Size();
 		this.Size.Height = this.Canvas.height;
 		this.Size.Width = this.Canvas.width;
 
-		this.ImageData = this.Context.createImageData(this.Size.Width, 1);
-		this.Pixels = this.ImageData.data;
+	// fill the canvas with black
+		this.Context.fillStyle = "#000000";
+		this.Context.rect(0, 0, this.Size.Width, this.Size.Height);
+		this.Context.fill();
 	}
 
 	public draw() {
@@ -61,12 +67,32 @@ class Mandelbrot extends MandelbrotConfig {
 				}
 
 				m.Context.putImageData(m.ImageData, 0, i);
+				m.drawLine(i + 1);
 			};
 		};
 
 		for(var i: number = 0; i < this.Size.Height; ++i) {
 			setTimeout(handler(this, i), 0); // allows for simultaneous calculation & drawing
 		}
+
+		this.Callback();
+	}
+
+	private drawLine(row: number) {
+		var offset: number = 0;
+
+		for(var i: number = 0; i < this.Size.Width; ++i) {
+			this.Pixels[offset++] = 255;
+			this.Pixels[offset++] = 0;
+			this.Pixels[offset++] = 0;
+			this.Pixels[offset++] = 255; // alpha
+		}
+
+		this.Context.putImageData(this.ImageData, 0, row);
+	}
+
+	public setCallback(f:() => void): void {
+		this.Callback = f;
 	}
 
 	public setCenter(x: number, y: number, zoom: number): void {

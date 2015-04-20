@@ -7,11 +7,9 @@
 // mathematics: https://github.com/oliver-spryn/College/tree/master/COMP%20322/Mandelbrot%20Set%20-%20Project%203
 // color smoothing: http://linas.org/art-gallery/escape/smooth.html
 
-window.onload = function() {
-// resize the canvas to the window
-	var ID: HTMLElement = document.getElementById("mandelbrot");
-	ID.setAttribute("height", "480px");
-	ID.setAttribute("width", window.outerWidth + "px");
+// configuration
+	var canvasID: string = "mandelbrot";
+	var runResizer: boolean = true;
 
 // some cool points on the Mandelbrot set
 	var pts: RenderPoint[] = new Array<RenderPoint>();
@@ -22,11 +20,53 @@ window.onload = function() {
 	var i: number = Math.floor(Math.random() * pts.length);
 	var rand: RenderPoint = pts[i];
 
-// draw the Mandelbrot set
-	setTimeout(function() {
-		var m: Mandelbrot = new Mandelbrot("mandelbrot");
-		m.setCenter(rand.X, rand.Y, rand.Zoom);
-		m.setIterations(rand.Iterations);
-		m.draw();
-	}, 1000);
-};
+// mandelbrot renderer
+	function render(time: number): void {
+		"use strict";
+
+	// prevent race conditions
+		if (!runResizer) {
+			return;
+		} else {
+			runResizer = false;
+		}
+
+	// resize the canvas to the window
+		var ID: HTMLElement = document.getElementById(canvasID);
+		ID.setAttribute("width", window.outerWidth + "px");
+
+	// draw the Mandelbrot set
+		setTimeout(function() {
+		// did the canvas size change after all that waiting time?
+			if (ID.getAttribute("width") !== window.outerWidth + "px") {
+				runResizer = true;
+				render(time);
+				return;
+			}
+
+		// draw the set
+			var m: Mandelbrot = new Mandelbrot(canvasID);
+			m.setCenter(rand.X, rand.Y, rand.Zoom);
+			m.setIterations(rand.Iterations);
+			m.setCallback(function() {
+				runResizer = true;
+
+			// did the canvas size change after all that rendering time?
+				if (ID.getAttribute("width") !== window.outerWidth + "px") {
+					console.log(ID.getAttribute("width"));
+					console.log(window.outerWidth + "px");
+					render(time);
+				}
+			});
+			m.draw();
+		}, time);
+	}
+
+// render the Mandelbrot set on window load and resize
+	window.onload = function() {
+		render(1000);
+	};
+
+	window.onresize = function() {
+		render(3000);
+	};

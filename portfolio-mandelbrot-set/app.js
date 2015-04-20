@@ -76,12 +76,15 @@ var Mandelbrot = (function (_super) {
             return;
         }
         this.Context = this.Canvas.getContext("2d");
+        this.ImageData = this.Context.createImageData(this.Canvas.width, 1);
+        this.Pixels = this.ImageData.data;
         this.Scale = new Size();
         this.Size = new Size();
         this.Size.Height = this.Canvas.height;
         this.Size.Width = this.Canvas.width;
-        this.ImageData = this.Context.createImageData(this.Size.Width, 1);
-        this.Pixels = this.ImageData.data;
+        this.Context.fillStyle = "#000000";
+        this.Context.rect(0, 0, this.Size.Width, this.Size.Height);
+        this.Context.fill();
     }
     Mandelbrot.prototype.draw = function () {
         var iterations = 0;
@@ -103,11 +106,26 @@ var Mandelbrot = (function (_super) {
                     m.setPixelColor(j, m.smoothColor(iterations, z));
                 }
                 m.Context.putImageData(m.ImageData, 0, i);
+                m.drawLine(i + 1);
             };
         };
         for (var i = 0; i < this.Size.Height; ++i) {
             setTimeout(handler(this, i), 0);
         }
+        this.Callback();
+    };
+    Mandelbrot.prototype.drawLine = function (row) {
+        var offset = 0;
+        for (var i = 0; i < this.Size.Width; ++i) {
+            this.Pixels[offset++] = 255;
+            this.Pixels[offset++] = 0;
+            this.Pixels[offset++] = 0;
+            this.Pixels[offset++] = 255;
+        }
+        this.Context.putImageData(this.ImageData, 0, row);
+    };
+    Mandelbrot.prototype.setCallback = function (f) {
+        this.Callback = f;
     };
     Mandelbrot.prototype.setCenter = function (x, y, zoom) {
         this.Bounds = new MandelbrotBounds();
@@ -151,21 +169,48 @@ var RenderPoint = (function () {
     }
     return RenderPoint;
 })();
-window.onload = function () {
-    var ID = document.getElementById("mandelbrot");
-    ID.setAttribute("height", "480px");
+var canvasID = "mandelbrot";
+var runResizer = true;
+var pts = new Array();
+pts.push(new RenderPoint(-1.790038, 0, 120000, 9000));
+pts.push(new RenderPoint(-1, 0, 5, 250));
+pts.push(new RenderPoint(-0.5623, -0.64283, 15000, 3000));
+var i = Math.floor(Math.random() * pts.length);
+var rand = pts[i];
+function render(time) {
+    "use strict";
+    if (!runResizer) {
+        return;
+    }
+    else {
+        runResizer = false;
+    }
+    var ID = document.getElementById(canvasID);
     ID.setAttribute("width", window.outerWidth + "px");
-    var pts = new Array();
-    pts.push(new RenderPoint(-1.790038, 0, 120000, 9000));
-    pts.push(new RenderPoint(-1, 0, 5, 250));
-    pts.push(new RenderPoint(-0.5623, -0.64283, 15000, 3000));
-    var i = Math.floor(Math.random() * pts.length);
-    var rand = pts[i];
     setTimeout(function () {
-        var m = new Mandelbrot("mandelbrot");
+        if (ID.getAttribute("width") !== window.outerWidth + "px") {
+            runResizer = true;
+            render(time);
+            return;
+        }
+        var m = new Mandelbrot(canvasID);
         m.setCenter(rand.X, rand.Y, rand.Zoom);
         m.setIterations(rand.Iterations);
+        m.setCallback(function () {
+            runResizer = true;
+            if (ID.getAttribute("width") !== window.outerWidth + "px") {
+                console.log(ID.getAttribute("width"));
+                console.log(window.outerWidth + "px");
+                render(time);
+            }
+        });
         m.draw();
-    }, 1000);
+    }, time);
+}
+window.onload = function () {
+    render(1000);
+};
+window.onresize = function () {
+    render(3000);
 };
 //# sourceMappingURL=app.js.map
