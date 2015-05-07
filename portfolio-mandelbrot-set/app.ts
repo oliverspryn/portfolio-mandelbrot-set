@@ -38,7 +38,11 @@
 	// draw the Mandelbrot set
 		setTimeout(function() {
 		// did the canvas size change after all that waiting time?
-			if (ID.getAttribute("width") !== window.outerWidth + "px") {
+			var cwidth: string = <string>ID.getAttribute("width").replace(/[a-zA-Z]/g, "");
+			var width: string = window.outerWidth + "px";
+			var wwidth: string = width.replace(/[a-zA-Z]/g, "");
+
+			if (cwidth !== wwidth) {
 				runResizer = true;
 				render(time);
 				return;
@@ -50,11 +54,12 @@
 			m.setIterations(rand.Iterations);
 			m.setCallback(function() {
 				runResizer = true;
+				cwidth = <string>ID.getAttribute("width").replace(/[a-zA-Z]/g, "");
+				width = window.outerWidth + "px";
+				wwidth = width.replace(/[a-zA-Z]/g, "");
 
 			// did the canvas size change after all that rendering time?
-				if (ID.getAttribute("width") !== window.outerWidth + "px") {
-					console.log(ID.getAttribute("width"));
-					console.log(window.outerWidth + "px");
+				if (cwidth !== wwidth) {
 					render(time);
 				}
 			});

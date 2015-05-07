@@ -188,7 +188,10 @@ function render(time) {
     var ID = document.getElementById(canvasID);
     ID.setAttribute("width", window.outerWidth + "px");
     setTimeout(function () {
-        if (ID.getAttribute("width") !== window.outerWidth + "px") {
+        var cwidth = ID.getAttribute("width").replace(/[a-zA-Z]/g, "");
+        var width = window.outerWidth + "px";
+        var wwidth = width.replace(/[a-zA-Z]/g, "");
+        if (cwidth !== wwidth) {
             runResizer = true;
             render(time);
             return;
@@ -198,9 +201,10 @@ function render(time) {
         m.setIterations(rand.Iterations);
         m.setCallback(function () {
             runResizer = true;
-            if (ID.getAttribute("width") !== window.outerWidth + "px") {
-                console.log(ID.getAttribute("width"));
-                console.log(window.outerWidth + "px");
+            cwidth = ID.getAttribute("width").replace(/[a-zA-Z]/g, "");
+            width = window.outerWidth + "px";
+            wwidth = width.replace(/[a-zA-Z]/g, "");
+            if (cwidth !== wwidth) {
                 render(time);
             }
         });
